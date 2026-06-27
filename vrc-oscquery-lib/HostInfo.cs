@@ -1,14 +1,16 @@
 ﻿using System.Collections.Generic;
-using Newtonsoft.Json;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace VRC.OSCQuery
 {
     public class HostInfo
     {
-        [JsonProperty(Keys.NAME)]
-        public string name;
+        [JsonPropertyName(Keys.NAME)]
+        public string name { get; set; } = string.Empty;
 
-        [JsonProperty(Keys.EXTENSIONS)] public Dictionary<string, bool> extensions = new Dictionary<string, bool>()
+        [JsonPropertyName(Keys.EXTENSIONS)]
+        public Dictionary<string, bool> Extensions { get; set; } = new()
         {
             { Attributes.ACCESS, true },
             { Attributes.CLIPMODE, false },
@@ -16,27 +18,19 @@ namespace VRC.OSCQuery
             { Attributes.TYPE, true },
             { Attributes.VALUE, true },
         };
-        
-        [JsonProperty(Keys.OSC_IP)]
-        public string oscIP;
-        
-        [JsonProperty(Keys.OSC_PORT)]
-        public int oscPort = OSCQueryService.DefaultPortOsc;
 
-        [JsonProperty(Keys.OSC_TRANSPORT)] 
+        [JsonPropertyName(Keys.OSC_IP)]
+        public string oscIP { get; set; } = string.Empty;
+
+        [JsonPropertyName(Keys.OSC_PORT)]
+        public int oscPort { get; set; } = OSCQueryService.DefaultPortOsc;
+
+        [JsonPropertyName(Keys.OSC_TRANSPORT)] 
         public string oscTransport = Keys.OSC_TRANSPORT_UDP;
-
-        /// <summary>
-        /// Empty Constructor required for JSON Serialization
-        /// </summary>
-        public HostInfo()
-        {
-            
-        }
 
         public override string ToString()
         {
-            var result = JsonConvert.SerializeObject(this);
+            var result = JsonSerializer.Serialize(this, HostInfoJsonContext.Default.HostInfo);
             return result;
         }
 
@@ -49,5 +43,10 @@ namespace VRC.OSCQuery
             public const string OSC_TRANSPORT = "OSC_TRANSPORT";
             public const string OSC_TRANSPORT_UDP = "UDP";
         }
+
     }
+
+    [JsonSourceGenerationOptions(DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonSerializable(typeof(HostInfo))]
+    internal partial class HostInfoJsonContext : JsonSerializerContext { }
 }

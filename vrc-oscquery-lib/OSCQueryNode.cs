@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
 namespace VRC.OSCQuery
 {
@@ -113,11 +114,14 @@ namespace VRC.OSCQuery
 
         public static OSCQueryRootNode FromString(string json)
         {
-            var tree = JsonConvert.DeserializeObject<OSCQueryRootNode>(json);
-            tree.RebuildLookup();
+            var tree = JsonSerializer.Deserialize(json, OSCQueryNodeJsonContext.Default.OSCQueryRootNode);
+            tree?.RebuildLookup();
             return tree;
         }
     }
+
+    [JsonDerivedType(typeof(OSCQueryNode), typeDiscriminator: "base")]
+    [JsonDerivedType(typeof(OSCQueryRootNode), typeDiscriminator: "extended")]
     public class OSCQueryNode
     {
         // Empty Constructor for Json Serialization
@@ -128,22 +132,23 @@ namespace VRC.OSCQuery
             FullPath = fullPath;
         }
         
-        [JsonProperty(Attributes.DESCRIPTION)]
-        public string Description;
+        [JsonPropertyName(Attributes.DESCRIPTION)]
+        public string Description { get; set; }
 
-        [JsonProperty(Attributes.FULL_PATH)] public string FullPath;
+        [JsonPropertyName(Attributes.FULL_PATH)]
+        public string FullPath { get; set; }
 
-        [JsonProperty(Attributes.ACCESS)]
-        public Attributes.AccessValues Access;
+        [JsonPropertyName(Attributes.ACCESS)]
+        public Attributes.AccessValues Access { get; set; }
 
-        [JsonProperty(Attributes.CONTENTS)]
-        public Dictionary<string, OSCQueryNode> Contents;
+        [JsonPropertyName(Attributes.CONTENTS)]
+        public Dictionary<string, OSCQueryNode> Contents { get; set; }
 
-        [JsonProperty(Attributes.TYPE)]
-        public string OscType;
+        [JsonPropertyName(Attributes.TYPE)]
+        public string OscType { get; set; }
 
-        [JsonProperty(Attributes.VALUE)]
-        public object[] Value;
+        [JsonPropertyName(Attributes.VALUE)]
+        public object[] Value { get; set; }
 
         [JsonIgnore] 
         public string ParentPath {
@@ -160,19 +165,14 @@ namespace VRC.OSCQuery
 
         public override string ToString()
         {
-            var result = JsonConvert.SerializeObject(this, WriteSettings);
+            var result = JsonSerializer.Serialize(this, OSCQueryNodeJsonContext.Default.OSCQueryNode);
             return result;
         }
-
-        public static void AddConverter(JsonConverter c)
-        {
-            WriteSettings.Converters.Add(c);
-        }
-
-        private static JsonSerializerSettings WriteSettings = new JsonSerializerSettings()
-        {
-            NullValueHandling = NullValueHandling.Ignore,
-        };
         
     }
+    [JsonSourceGenerationOptions(DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull)]
+    [JsonSerializable(typeof(OSCQueryNode))]
+    [JsonSerializable(typeof(OSCQueryRootNode))]
+    [JsonSerializable(typeof(JsonElement))]
+    internal partial class OSCQueryNodeJsonContext : JsonSerializerContext { }
 }

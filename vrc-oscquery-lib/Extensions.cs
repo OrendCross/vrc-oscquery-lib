@@ -4,7 +4,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace VRC.OSCQuery
 {
@@ -74,7 +74,7 @@ namespace VRC.OSCQuery
         {
             var response = await _client.GetAsync($"http://{address}:{port}?{Attributes.HOST_INFO}");
             var hostInfoString = await response.Content.ReadAsStringAsync();
-            return JsonConvert.DeserializeObject<HostInfo>(hostInfoString);
+            return JsonSerializer.Deserialize(hostInfoString, HostInfoJsonContext.Default.HostInfo);
         }
         
         public static async Task ServeStaticFile(string path, string mimeType, HttpListenerContext context)
